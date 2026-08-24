@@ -11,9 +11,9 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>location-service</artifactId>
-  <name>location-service</name>
-  <description>Location service for cities and airports</description>
+  <artifactId>user-service</artifactId>
+  <name>user-service</name>
+  <description>User service for accounts and authentication</description>
 
   <dependencies>
     <dependency>

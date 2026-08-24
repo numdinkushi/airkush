@@ -9,10 +9,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.Size;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,7 +28,7 @@ import lombok.Setter;
 @Builder
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class City {
+public class Airport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,20 +37,22 @@ public class City {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, unique = true)
-    private String cityCode;
+    @Column(nullable = false, unique = true, length = 3)
+    private String iataCode;
 
-    @Column(nullable = false)
-    private String countryCode;
+    @Column(nullable = false, unique = true, length = 4)
+    private String icaoCode;
 
-    @Column(nullable = false)
-    private String countryName;
-
-    @Size(max = 10)
-    private String regionCode;
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    @JoinColumn(name = "city_id", nullable = false)
+    private City city;
 
     @Column(name = "time_zone_id", length = 50)
     private String timeZoneId;
+
+    private Double latitude;
+
+    private Double longitude;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

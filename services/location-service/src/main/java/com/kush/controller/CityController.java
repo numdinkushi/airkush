@@ -1,10 +1,9 @@
 package com.kush.controller;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,10 +14,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.kush.payload.request.BulkRequest;
 import com.kush.payload.request.CityRequest;
+import com.kush.payload.response.ApiResponse;
+import com.kush.payload.response.BulkResult;
 import com.kush.payload.response.CityResponse;
+import com.kush.payload.response.PageResponse;
 import com.kush.service.CityService;
+import com.kush.web.ApiResponses;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,34 +36,48 @@ public class CityController {
     private final CityService cityService;
 
     @PostMapping
-    public ResponseEntity<CityResponse> createCity(
+    public ResponseEntity<ApiResponse<CityResponse>> createCity(
             @Valid @RequestBody CityRequest cityRequest
     ) {
-        CityResponse res = cityService.createCity(cityRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(res);
+        return ApiResponses.created(cityService.createCity(cityRequest), "City created successfully");
+    }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<ApiResponse<BulkResult<CityResponse>>> createCities(
+            @Valid @RequestBody BulkRequest<CityRequest> request
+    ) {
+        return bulkResponse(cityService.createCities(request.getItems()), "Cities");
+    }
+
+    @PostMapping(value = "/bulk/csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<BulkResult<CityResponse>>> importCities(
+            @RequestParam("file") MultipartFile file
+    ) {
+        return bulkResponse(cityService.importCities(file), "Cities");
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CityResponse> getCityById(@PathVariable Long id) {
-        return ResponseEntity.ok(cityService.getCityById(id));
+    public ResponseEntity<ApiResponse<CityResponse>> getCityById(@PathVariable Long id) {
+        return ApiResponses.ok(cityService.getCityById(id), "City retrieved successfully");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CityResponse> updateCity(
+    public ResponseEntity<ApiResponse<CityResponse>> updateCity(
             @PathVariable Long id,
             @Valid @RequestBody CityRequest cityRequest
     ) {
-        return ResponseEntity.ok(cityService.updateCity(id, cityRequest));
+        return ApiResponses.ok(cityService.updateCity(id, cityRequest), "City updated successfully");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCity(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteCity(@PathVariable Long id) {
         cityService.deleteCity(id);
-        return ResponseEntity.noContent().build();
+        return ApiResponses.ok("City deleted successfully");
     }
 
     @GetMapping
-    public ResponseEntity<Page<CityResponse>> getAllCities(
+    public ResponseEntity<ApiResponse<PageResponse<CityResponse>>> getAllCities(
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "name") String sortBy,
@@ -66,27 +85,40 @@ public class CityController {
     ) {
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(cityService.getAllCities(pageable));
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<Page<CityResponse>> searchCities(
-            @RequestParam String keyword,
-            Pageable pageable
-    ) {
-        return ResponseEntity.ok(cityService.searchCities(keyword, pageable));
+        return ApiResponses.ok(
+                PageResponse.from(cityService.getAllCities(search, pageable)),
+                "Cities retrieved successfully"
+        );
     }
 
     @GetMapping("/country/{countryCode}")
-    public ResponseEntity<Page<CityResponse>> getCitiesByCountryCode(
+    public ResponseEntity<ApiResponse<PageResponse<CityResponse>>> getCitiesByCountryCode(
             @PathVariable String countryCode,
             Pageable pageable
     ) {
-        return ResponseEntity.ok(cityService.getCitiesByCountryCode(countryCode, pageable));
+        return ApiResponses.ok(
+                PageResponse.from(cityService.getCitiesByCountryCode(countryCode, pageable)),
+                "Cities retrieved successfully"
+        );
     }
 
     @GetMapping("/exists/{cityCode}")
-    public ResponseEntity<Boolean> cityExists(@PathVariable String cityCode) {
-        return ResponseEntity.ok(cityService.cityExists(cityCode));
+    public ResponseEntity<ApiResponse<Void>> cityExists(@PathVariable String cityCode) {
+        return ApiResponses.ok(
+                cityService.cityExists(cityCode) ? "City exists" : "City does not exist"
+        );
+    }
+
+    private ResponseEntity<ApiResponse<BulkResult<CityResponse>>> bulkResponse(
+            BulkResult<CityResponse> result,
+            String label
+    ) {
+        String message = label + " bulk import completed: "
+                + result.getCreatedCount() + " created, "
+                + result.getFailedCount() + " failed";
+        if (result.getFailedCount() == 0) {
+            return ApiResponses.created(result, message);
+        }
+        return ApiResponses.ok(result, message);
     }
 }

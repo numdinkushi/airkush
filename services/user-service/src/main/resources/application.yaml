@@ -1,9 +1,9 @@
 server:
-  port: 5004
+  port: 5001
 
 spring:
   application:
-    name: location-service
+    name: user-service
   config:
     import: optional:file:.env[.properties]
   datasource:
@@ -22,7 +22,3 @@ spring:
       enabled: true
     livereload:
       enabled: true
-  servlet:
-    multipart:
-      max-file-size: 2MB
-      max-request-size: 2MB

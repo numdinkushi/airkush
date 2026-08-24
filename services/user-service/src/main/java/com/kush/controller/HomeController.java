@@ -12,6 +12,6 @@ public class HomeController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Void>> home() {
-        return ApiResponses.ok("Location service is running");
+        return ApiResponses.ok("User service is running");
     }
 }

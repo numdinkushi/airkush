@@ -22,3 +22,8 @@ spring:
       enabled: true
     livereload:
       enabled: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-change-this-secret-key-must-be-32b}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}

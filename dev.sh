@@ -14,6 +14,7 @@ SERVICES=(
   cloud/api-gateway
   services/user-service
   services/location-service
+  services/flight-service
 )
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -105,6 +106,9 @@ if printf '%s\n' "${MODULES[@]}" | grep -qx "services/user-service"; then
 fi
 if printf '%s\n' "${MODULES[@]}" | grep -qx "services/location-service"; then
   wait_for_url "http://localhost:8761/eureka/apps/LOCATION-SERVICE" "LOCATION-SERVICE"
+fi
+if printf '%s\n' "${MODULES[@]}" | grep -qx "services/flight-service"; then
+  wait_for_url "http://localhost:8761/eureka/apps/FLIGHT-SERVICE" "FLIGHT-SERVICE"
 fi
 
 if printf '%s\n' "${MODULES[@]}" | grep -qx "$GATEWAY"; then

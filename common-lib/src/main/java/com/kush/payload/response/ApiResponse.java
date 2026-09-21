@@ -3,12 +3,16 @@ package com.kush.payload.response;
 import java.time.Instant;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import lombok.Getter;
 
 @Getter
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "success", "message", "data", "errors", "timestamp" })
 public class ApiResponse<T> {
@@ -22,11 +26,12 @@ public class ApiResponse<T> {
     private final Map<String, String> errors;
     private final Instant timestamp;
 
+    @JsonCreator
     private ApiResponse(
-            boolean success,
-            String message,
-            T data,
-            Map<String, String> errors
+            @JsonProperty("success") boolean success,
+            @JsonProperty("message") String message,
+            @JsonProperty("data") T data,
+            @JsonProperty("errors") Map<String, String> errors
     ) {
         this.success = success;
         this.message = message;

@@ -25,6 +25,14 @@ spring:
               uri: lb://location-service
               predicates:
                 - Path=/api/airports/**
+            - id: flight-airlines
+              uri: lb://flight-service
+              predicates:
+                - Path=/api/airlines/**
+            - id: flight-flights
+              uri: lb://flight-service
+              predicates:
+                - Path=/api/flights/**
 
 eureka:
   client:

@@ -11,9 +11,9 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>user-service</artifactId>
-  <name>user-service</name>
-  <description>User service for accounts and authentication</description>
+  <artifactId>flight-service</artifactId>
+  <name>flight-service</name>
+  <description>Flight service for airlines and schedules</description>
 
   <dependencies>
     <dependency>
@@ -44,6 +44,16 @@
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-openfeign</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-loadbalancer</artifactId>
     </dependency>
 
     <dependency>
@@ -97,9 +107,7 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
           <skip>false</skip>
-          <!-- Required so DevTools can restart the app in a child process -->
           <fork>true</fork>
-          <!-- Keep .env / relative paths working when started from repo root -->
           <workingDirectory>${project.basedir}</workingDirectory>
         </configuration>
       </plugin>

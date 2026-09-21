@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: user-auth
+              uri: lb://user-service
+              predicates:
+                - Path=/api/auth/**
+            - id: user-users
+              uri: lb://user-service
+              predicates:
+                - Path=/api/users/**
+            - id: location-cities
+              uri: lb://location-service
+              predicates:
+                - Path=/api/cities/**
+            - id: location-airports
+              uri: lb://location-service
+              predicates:
+                - Path=/api/airports/**
+            - id: flight-airlines
+              uri: lb://flight-service
+              predicates:
+                - Path=/api/airlines/**
+            - id: flight-flights
+              uri: lb://flight-service
+              predicates:
+                - Path=/api/flights/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true

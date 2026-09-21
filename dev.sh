@@ -10,8 +10,11 @@
 set -uo pipefail
 
 SERVICES=(
+  cloud/service-registry
+  cloud/api-gateway
   services/user-service
   services/location-service
+  services/flight-service
 )
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -57,15 +60,61 @@ trap cleanup EXIT INT TERM
 echo "[dev.sh] compiling $(csv "${MODULES[@]}")..."
 mvn -pl "$(csv "${MODULES[@]}")" -am compile || exit 1
 
-for module in "${MODULES[@]}"; do
+start_module() {
+  local module="$1"
+  local name
   name="$(basename "$module")"
-  log="$LOG_DIR/${name}.log"
+  local log="$LOG_DIR/${name}.log"
   : >"$log"
   echo "[dev.sh] starting $name  →  $log"
   mvn -pl "$module" -am spring-boot:run >>"$log" 2>&1 &
   PIDS+=($!)
   LOG_FILES+=("$log")
+}
+
+wait_for_url() {
+  local url="$1"
+  local name="$2"
+  local i
+  echo "[dev.sh] waiting for $name..."
+  for i in $(seq 1 60); do
+    if curl -s -o /dev/null --connect-timeout 1 "$url"; then
+      echo "[dev.sh] $name is up"
+      return 0
+    fi
+    sleep 1
+  done
+  echo "[dev.sh] timed out waiting for $name at $url" >&2
+  return 1
+}
+
+REGISTRY="cloud/service-registry"
+GATEWAY="cloud/api-gateway"
+if printf '%s\n' "${MODULES[@]}" | grep -qx "$REGISTRY"; then
+  start_module "$REGISTRY"
+  wait_for_url "http://localhost:8761" "Eureka"
+fi
+
+for module in "${MODULES[@]}"; do
+  [ "$module" = "$REGISTRY" ] && continue
+  [ "$module" = "$GATEWAY" ] && continue
+  start_module "$module"
 done
+
+if printf '%s\n' "${MODULES[@]}" | grep -qx "services/user-service"; then
+  wait_for_url "http://localhost:8761/eureka/apps/USER-SERVICE" "USER-SERVICE"
+fi
+if printf '%s\n' "${MODULES[@]}" | grep -qx "services/location-service"; then
+  wait_for_url "http://localhost:8761/eureka/apps/LOCATION-SERVICE" "LOCATION-SERVICE"
+fi
+if printf '%s\n' "${MODULES[@]}" | grep -qx "services/flight-service"; then
+  wait_for_url "http://localhost:8761/eureka/apps/FLIGHT-SERVICE" "FLIGHT-SERVICE"
+fi
+
+if printf '%s\n' "${MODULES[@]}" | grep -qx "$GATEWAY"; then
+  start_module "$GATEWAY"
+  wait_for_url "http://localhost:8080" "API Gateway"
+fi
 
 tail -n +1 -F "${LOG_FILES[@]}" &
 TAIL_PID=$!
